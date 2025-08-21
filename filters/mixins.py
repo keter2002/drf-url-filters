@@ -53,7 +53,7 @@ class FiltersMixin(object):
                     transform_value = value_transformations.get(query, lambda val: val)
                     transformed_value = transform_value(value)
                     # [2] multiple options is filter values will execute as `IN` query
-                    if isinstance(value, list) and not query_filter.endswith('__in'):
+                    if ',' in value and not query_filter.endswith('__in'):
                         query_filter += '__in'
                     if is_exclude:
                         excludes.append((query_filter, transformed_value))
