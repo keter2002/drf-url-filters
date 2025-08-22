@@ -54,7 +54,7 @@ class FiltersMixin(object):
                     transform_value = value_transformations.get(query, lambda val: val)
                     transformed_value = transform_value(value)
                     # [2] multiple options is filter values will execute as `IN` query
-                    if ',' in value and not query_filter.endswith('__in'):
+                    if isinstance(transformed_value, list) and not query_filter.endswith('__in'):
                         # If lookup uses contains and is a CSV, needs to apply
                         # contains separately with each value.
 
@@ -62,9 +62,8 @@ class FiltersMixin(object):
                         found = False
                         for lookup_suffix in lookups_with_subquery:
                             if query_filter.endswith(lookup_suffix):
-                                values = [v for v in value.split(',') if v != '']
-                                query_filter = query_filter[:-len(lookup_suffix)]
-                                filters_values.append((query_filter, (lookup_suffix, values)))
+                                filters_values.append((query_filter[:-len(lookup_suffix)],
+                                                       (lookup_suffix, transformed_value)))
                                 found = True
                                 break
                         if found:

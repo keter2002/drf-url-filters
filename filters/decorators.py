@@ -16,8 +16,11 @@ def decorate_get_queryset(f):
         # This dict will hold exclude kwargs to pass in to Django ORM calls.
         db_excludes = queryset_filters['db_excludes']
 
+        # This dict will hold filter kwargs subqueries to pass in to Django ORM calls.
+        db_filters_values = queryset_filters['db_filters_values']
+
         query = Q()
-        for key, lookup in queryset_filters['db_filters_values'].items():
+        for key, lookup in db_filters_values.items():
             lookup_op = lookup[0]
             # If has `IN` already in query to this key, apply it.
             if key+'__in' in db_filters:
