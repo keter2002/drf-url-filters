@@ -22,9 +22,10 @@ class FiltersMixin(object):
         [2] when a CSV is passed as value to a query params make a filter
             with 'IN' query.
         '''
-
         filters = []
         excludes = []
+        # TODO: excludes_values.
+        filters_values = []
 
         if getattr(self, 'filter_mappings', None) and query_params:
             filter_mappings = self.filter_mappings
@@ -54,13 +55,22 @@ class FiltersMixin(object):
                     transformed_value = transform_value(value)
                     # [2] multiple options is filter values will execute as `IN` query
                     if ',' in value and not query_filter.endswith('__in'):
+                        # If lookup uses contains and is a CSV, needs to apply
+                        # contains separately with each value.
+
+                        contains_str = '__contains'
+                        if query_filter.endswith(contains_str):
+                            values = [v for v in value.split(',') if v != '']
+                            query_filter = query_filter[:-len(contains_str)]
+                            filters_values.append((query_filter, (contains_str, values)))
+                            continue
                         query_filter += '__in'
                     if is_exclude:
                         excludes.append((query_filter, transformed_value))
                     else:
                         filters.append((query_filter, transformed_value))
 
-        return dict(filters), dict(excludes)
+        return dict(filters), dict(excludes), dict(filters_values)
 
     def __merge_query_params(self, url_params, query_params):
         '''
@@ -82,12 +92,15 @@ class FiltersMixin(object):
         query_params = self.__merge_query_params(url_params, query_params)
 
         # get queryset filters
-        db_filters = self.__get_queryset_filters(query_params)[0]
-        db_excludes = self.__get_queryset_filters(query_params)[1]
+        filters = self.__get_queryset_filters(query_params)
+        db_filters = filters[0]
+        db_excludes = filters[1]
+        db_filters_values = filters[2]
 
         return {
             'db_filters': db_filters,
             'db_excludes': db_excludes,
+            'db_filters_values': db_filters_values,
         }
 
     def get_queryset(self):
@@ -96,4 +109,4 @@ class FiltersMixin(object):
         # (and hence the metaclass would not have been
         # able to decorate it with the filtering logic.)
 
-        return super(FiltersMixin, self).get_queryset()
+        return super().get_queryset()
