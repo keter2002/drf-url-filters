@@ -109,4 +109,4 @@ class FiltersMixin(object):
         # (and hence the metaclass would not have been
         # able to decorate it with the filtering logic.)
 
-        return super().get_queryset()
+        return super(FiltersMixin, self).get_queryset()
