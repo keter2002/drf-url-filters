@@ -58,13 +58,19 @@ class FiltersMixin(object):
                         # If lookup uses contains and is a CSV, needs to apply
                         # contains separately with each value.
 
-                        contains_str = '__contains'
-                        if query_filter.endswith(contains_str):
-                            values = [v for v in value.split(',') if v != '']
-                            query_filter = query_filter[:-len(contains_str)]
-                            filters_values.append((query_filter, (contains_str, values)))
+                        lookups_with_subquery = ('__contains', '__icontains')
+                        found = False
+                        for lookup_suffix in lookups_with_subquery:
+                            if query_filter.endswith(lookup_suffix):
+                                values = [v for v in value.split(',') if v != '']
+                                query_filter = query_filter[:-len(lookup_suffix)]
+                                filters_values.append((query_filter, (lookup_suffix, values)))
+                                found = True
+                                break
+                        if found:
                             continue
                         query_filter += '__in'
+
                     if is_exclude:
                         excludes.append((query_filter, transformed_value))
                     else:
